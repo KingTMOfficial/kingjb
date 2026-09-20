@@ -29,6 +29,10 @@
     mansoor0x · PS4 Exploit<br>
     © 2026 mansoor0x<br>
     <br>
+    <div id="payload-select" style="display:none;margin:10px 0;">
+      <b>Payload:</b> GoldHEN (default)<br>
+      <label style="cursor:pointer;"><input type="checkbox" id="chk-debug"> Also load ps4debug (remote debugger)</label><br><br>
+    </div>
     <pre id="console"></pre>
 </body>
 <script>
@@ -62,11 +66,18 @@
     print("firmware: " + (key || "unknown"));
     print("supported: " + (supported ? "yes" : "no"), supported ? "ok" : "bad");
 
-    var target = "jb.html" + location.search;
+    function buildTarget() {
+        var p = new URLSearchParams(location.search);
+        var chk = document.getElementById("chk-debug");
+        if (chk && chk.checked) p.set("debug", "1");
+        else p.delete("debug");
+        var qs = p.toString();
+        return "jb.html" + (qs ? "?" + qs : "");
+    }
 
     function go() {
         print("loading exploit...", "warn");
-        location.replace(target);
+        location.replace(buildTarget());
     }
 
     function waitForTap(msg, action) {
@@ -79,6 +90,9 @@
         window.addEventListener("click",   fire);
         window.addEventListener("keydown", fire);
     }
+
+    var psel = document.getElementById("payload-select");
+    if (psel) psel.style.display = "block";
 
     if (!supported) {
         print("UNSUPPORTED FIRMWARE — tap / press X to run anyway", "bad");
