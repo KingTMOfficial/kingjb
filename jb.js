@@ -155,7 +155,7 @@ let allDone = false,
     const DO_JB = params.get("jb") !== "0";
     const DO_PATCH = params.get("patch") !== "0";
     const DO_PAYLOAD = params.get("payload") !== "0";
-    const DO_DEBUG = params.get("debug") === "1";
+    const DO_DEBUG = params.get("debug") !== "0";
 
     const KEEP_JB = params.get("keepjb") === "1";
 
@@ -190,7 +190,7 @@ let allDone = false,
     const KPATCH_FILE =
       "patches/" + (off.kpatch || fwKey.replace(".", "") + ".bin");
     const PAYLOAD_FILE = off.payload || "payload.bin";
-    const PAYLOAD2_FILE = DO_DEBUG && off.payload2 ? off.payload2 : null;
+    const PAYLOAD2_FILE = off.payload2 || null;
     const needPatch = ["k_sysent_661", "k_jmp_rsi"].filter(
       (k) => off[k] === undefined,
     );

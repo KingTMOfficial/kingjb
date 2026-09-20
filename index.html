@@ -30,8 +30,7 @@
     © 2026 mansoor0x<br>
     <br>
     <div id="payload-select" style="display:none;margin:10px 0;">
-      <b>Payload:</b> GoldHEN (default)<br>
-      <label style="cursor:pointer;"><input type="checkbox" id="chk-debug"> Also load ps4debug (remote debugger)</label><br><br>
+      <b>Payload:</b> GoldHEN + ps4debug<br>
     </div>
     <pre id="console"></pre>
 </body>
@@ -67,12 +66,7 @@
     print("supported: " + (supported ? "yes" : "no"), supported ? "ok" : "bad");
 
     function buildTarget() {
-        var p = new URLSearchParams(location.search);
-        var chk = document.getElementById("chk-debug");
-        if (chk && chk.checked) p.set("debug", "1");
-        else p.delete("debug");
-        var qs = p.toString();
-        return "jb.html" + (qs ? "?" + qs : "");
+        return "jb.html" + location.search;
     }
 
     function go() {
