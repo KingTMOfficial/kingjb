@@ -30,7 +30,7 @@
     © 2026 mansoor0x<br>
     <br>
     <div id="payload-select" style="display:none;margin:10px 0;">
-      <b>Payload:</b> GoldHEN + ps4debug<br>
+      <b>Payload:</b> GoldHEN<br>
     </div>
     <pre id="console"></pre>
 </body>
@@ -65,8 +65,10 @@
     print("firmware: " + (key || "unknown"));
     print("supported: " + (supported ? "yes" : "no"), supported ? "ok" : "bad");
 
+    var target = "jb.html" + location.search;
+
     function buildTarget() {
-        return "jb.html" + location.search;
+        return target;
     }
 
     function go() {

